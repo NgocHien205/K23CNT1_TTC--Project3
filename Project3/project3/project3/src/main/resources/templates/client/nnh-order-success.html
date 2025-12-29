@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Đặt hàng thành công</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="d-flex align-items-center justify-content-center vh-100 bg-light">
+<div class="text-center">
+    <div class="mb-4">
+        <i class="fa-solid fa-circle-check text-success" style="font-size: 80px;"></i>
+    </div>
+    <h2 class="fw-bold mb-3">Đặt hàng thành công!</h2>
+    <p class="lead text-muted mb-4">Cảm ơn bạn đã mua sắm tại NNH Store.<br>Đơn hàng của bạn đang được xử lý.</p>
+
+    <div class="d-flex justify-content-center gap-3">
+        <a href="/" class="btn btn-primary px-4">Tiếp tục mua hàng</a>
+        <a id="viewOrderBtn" href="#" class="btn btn-outline-secondary px-4">Xem đơn hàng</a>
+    </div>
+</div>
+</body>
+<script th:inline="javascript">
+    // === ĐỒNG BỘ COOKIE VỚI LOCALSTORAGE ===
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    // Kiểm tra cookie NNH_USER
+    const userCookie = getCookie('NNH_USER');
+    if (userCookie) {
+        try {
+            const userData = JSON.parse(decodeURIComponent(userCookie));
+            localStorage.setItem('NNH_USER', JSON.stringify(userData));
+        } catch(e) {
+            console.log("Lỗi khi parse cookie");
+        }
+    }
+
+    // Lấy ID đơn hàng từ Model Controller (nếu có)
+    const orderId = [[${nnhOrderId}]];
+
+    // Lấy User từ LocalStorage (đã được đồng bộ từ cookie)
+    const userJson = localStorage.getItem('NNH_USER');
+    const currentUser = userJson ? JSON.parse(userJson) : null;
+
+    const btn = document.getElementById('viewOrderBtn');
+
+    if (orderId && currentUser) {
+        // Gắn link đầy đủ: /my-orders/15?userId=5
+        btn.href = `/my-orders/${orderId}?userId=${currentUser.nnhId}`;
+    } else if (currentUser) {
+        // Nếu không có orderId thì về trang danh sách
+        btn.href = `/my-orders?userId=${currentUser.nnhId}`;
+        btn.innerText = "Lịch sử đơn hàng";
+    } else {
+        // Chưa đăng nhập
+        btn.href = "/login";
+    }
+</script>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/nnh-layout :: head}"></head>
+<body>
+<nav th:replace="~{admin/nnh-layout :: nav}"></nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Quản lý Sản phẩm</h2>
+        <button class="btn btn-primary" onclick="openAddProductModal()">
+            <i class="fa-solid fa-plus"></i> Thêm Sản phẩm
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Ảnh</th>
+                    <th>Tên</th>
+                    <th>Danh mục</th>
+                    <th>Giá</th>
+                    <th>Kho</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${nnhProducts}">
+                    <td th:text="${p.nnhId}"></td>
+                    <td>
+                        <img th:src="${p.nnhImageUrl}" alt="img" style="height: 40px;">
+                    </td>
+                    <td th:text="${p.nnhName}"></td>
+                    <td th:text="${p.nnhCategory != null ? p.nnhCategory.nnhName : 'N/A'}"></td>
+                    <td th:text="${#numbers.formatDecimal(p.nnhPrice, 0, 'COMMA', 0, 'POINT')}"></td>
+                    <td th:text="${p.nnhStock}"></td>
+                    <td>
+                        <a th:href="@{/admin/products/{id}(id=${p.nnhId})}" class="btn btn-sm btn-info text-white me-1">
+                            Xem
+                        </a>
+                        <button class="btn btn-sm btn-warning"
+                                th:data-id="${p.nnhId}"
+                                th:data-name="${p.nnhName}"
+                                th:data-price="${p.nnhPrice}"
+                                th:data-stock="${p.nnhStock}"
+                                th:data-img="${p.nnhImageUrl}"
+                                th:data-cat="${p.nnhCategory != null ? p.nnhCategory.nnhId : ''}"
+                                onclick="openEditProductModal(this)">
+                            Sửa
+                        </button>
+                        <button class="btn btn-sm btn-danger" th:onclick="'deleteProduct(' + ${p.nnhId} + ')'">Xóa</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pModalTitle">Sản phẩm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pId">
+                <div class="mb-2">
+                    <label>Tên sản phẩm</label>
+                    <input type="text" id="pName" class="form-control">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <label>Giá</label>
+                        <input type="number" id="pPrice" class="form-control">
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label>Tồn kho</label>
+                        <input type="number" id="pStock" class="form-control">
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label>Link Ảnh</label>
+                    <input type="text" id="pImg" class="form-control">
+                </div>
+                <div class="mb-2">
+                    <label>Danh mục</label>
+                    <select id="pCatId" class="form-select">
+                        <option th:each="c : ${nnhCategories}"
+                                th:value="${c.nnhId}"
+                                th:text="${c.nnhName}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveProduct()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+    let isProdEdit = false;
+
+    function openAddProductModal() {
+        isProdEdit = false;
+        document.getElementById('pModalTitle').innerText = "Thêm Sản phẩm";
+        document.getElementById('pId').value = "";
+        document.getElementById('pName').value = "";
+        document.getElementById('pPrice').value = "";
+        document.getElementById('pStock').value = "";
+        document.getElementById('pImg').value = "";
+        document.getElementById('pCatId').selectedIndex = 0;
+        productModal.show();
+    }
+
+    function openEditProductModal(btn) {
+        isProdEdit = true;
+        document.getElementById('pModalTitle').innerText = "Cập nhật Sản phẩm";
+        document.getElementById('pId').value = btn.getAttribute('data-id');
+        document.getElementById('pName').value = btn.getAttribute('data-name');
+        document.getElementById('pPrice').value = btn.getAttribute('data-price');
+        document.getElementById('pStock').value = btn.getAttribute('data-stock');
+        document.getElementById('pImg').value = btn.getAttribute('data-img');
+        document.getElementById('pCatId').value = btn.getAttribute('data-cat');
+        productModal.show();
+    }
+
+    function saveProduct() {
+        const id = document.getElementById('pId').value;
+        const data = {
+            nnhName: document.getElementById('pName').value,
+            nnhPrice: document.getElementById('pPrice').value,
+            nnhStock: document.getElementById('pStock').value,
+            nnhImageUrl: document.getElementById('pImg').value,
+            // Object Category con bên trong
+            nnhCategory: {
+                nnhId: document.getElementById('pCatId').value
+            }
+        };
+
+        const url = isProdEdit ? '/api/admin/nnh-products/' + id : '/api/admin/nnh-products';
+        const method = isProdEdit ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(res => {
+            if(res.ok) location.reload();
+            else alert("Lỗi lưu sản phẩm!");
+        });
+    }
+
+    function deleteProduct(id) {
+        if(confirm("Xóa sản phẩm này?")) {
+            fetch('/api/admin/nnh-products/' + id, { method: 'DELETE' })
+            .then(res => { if(res.ok) location.reload(); });
+        }
+    }
+</script>
+</body>
+</html>

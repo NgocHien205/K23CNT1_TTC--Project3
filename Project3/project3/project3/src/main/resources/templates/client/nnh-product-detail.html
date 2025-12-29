@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${p.nnhName}">Chi tiết sản phẩm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .product-img-detail {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .related-card:hover {
+            transform: translateY(-5px);
+            transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .breadcrumb a { text-decoration: none; color: #6c757d; }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary" href="/">
+            <i class="fa-solid fa-shirt"></i> NNH STORE
+        </a>
+        <div class="d-flex align-items-center">
+            <a href="/cart" class="btn btn-light position-relative">
+                <i class="fa-solid fa-cart-shopping fa-lg text-primary"></i>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item active" th:text="${p.nnhName}"></li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-5 mb-4 mb-md-0">
+                    <img th:src="${p.nnhImageUrl}" class="product-img-detail" alt="Product Image">
+                </div>
+
+                <div class="col-md-7">
+                    <small class="text-uppercase text-muted fw-bold"
+                           th:text="${p.nnhCategory != null ? p.nnhCategory.nnhName : 'Danh mục khác'}"></small>
+                    <h2 class="fw-bold mt-2" th:text="${p.nnhName}"></h2>
+
+                    <div class="fs-3 fw-bold text-danger my-3"
+                         th:text="${#numbers.formatDecimal(p.nnhPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+
+                    <p class="text-muted">
+                        Mô tả: Sản phẩm chất lượng cao, vải thoáng mát, phù hợp với xu hướng thời trang hiện đại.
+                        (Bạn có thể thêm cột nnhDescription vào DB để hiển thị ở đây).
+                    </p>
+
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="me-3 fw-bold">Số lượng:</span>
+                        <input type="number" id="quantityInput" class="form-control text-center" value="1" min="1" style="width: 80px;">
+                        <span class="ms-3 text-muted" th:text="'(Còn ' + ${p.nnhStock} + ' sản phẩm)'"></span>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-block">
+                        <button class="btn btn-primary btn-lg px-5" onclick="addToCartDetail()">
+                            <i class="fa-solid fa-cart-plus me-2"></i> Thêm vào giỏ
+                        </button>
+                        <a href="/" class="btn btn-outline-secondary btn-lg">Tiếp tục xem</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${!nnhRelatedProducts.empty}">
+        <h4 class="fw-bold text-primary mb-3">Sản phẩm liên quan</h4>
+        <div class="row row-cols-1 row-cols-md-4 g-4 mb-5">
+            <div class="col" th:each="rp : ${nnhRelatedProducts}">
+                <div class="card h-100 border-0 related-card">
+                    <a th:href="@{/product/{id}(id=${rp.nnhId})}">
+                        <img th:src="${rp.nnhImageUrl}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    </a>
+                    <div class="card-body text-center">
+                        <h6 class="card-title fw-bold">
+                            <a th:href="@{/product/{id}(id=${rp.nnhId})}" class="text-decoration-none text-dark" th:text="${rp.nnhName}"></a>
+                        </h6>
+                        <p class="card-text text-danger fw-bold" th:text="${#numbers.formatDecimal(rp.nnhPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    // 1. Lấy ID sản phẩm từ Thymeleaf
+    const PRODUCT_ID = [[${p.nnhId}]];
+
+    // 2. Lấy User từ LocalStorage
+    const userJson = localStorage.getItem('NNH_USER');
+    const currentUser = userJson ? JSON.parse(userJson) : null;
+
+    // Navbar logic (để nút giỏ hàng trên header hoạt động đúng)
+    if(currentUser) {
+        // Cập nhật link giỏ hàng trên header nếu có
+        const cartBtn = document.querySelector('a[href="/cart"]');
+        if(cartBtn) cartBtn.href = `/cart?userId=${currentUser.nnhId}`;
+    }
+
+    function addToCartDetail() {
+        if (!currentUser) {
+            alert("Vui lòng đăng nhập để mua hàng!");
+            window.location.href = "/login";
+            return;
+        }
+
+        const qty = document.getElementById('quantityInput').value;
+        if(qty < 1) {
+            alert("Số lượng phải lớn hơn 0");
+            return;
+        }
+
+        // SỬA LỖI: Dùng currentUser.nnhId thay vì CURRENT_USER_ID
+        fetch(`/api/nnh-carts/add?userId=${currentUser.nnhId}&productId=${PRODUCT_ID}&quantity=${qty}`, {
+            method: 'POST'
+        })
+        .then(res => {
+            if(res.ok) {
+                if(confirm("Đã thêm vào giỏ! Bạn có muốn đến giỏ hàng ngay không?")) {
+                    // Chuyển hướng kèm userId
+                    window.location.href = `/cart?userId=${currentUser.nnhId}`;
+                }
+            } else {
+                alert("Lỗi thêm vào giỏ!");
+            }
+        })
+        .catch(err => alert("Lỗi kết nối!"));
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

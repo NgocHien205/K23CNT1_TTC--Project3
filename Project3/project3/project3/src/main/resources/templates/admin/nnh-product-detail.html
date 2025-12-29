@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/nnh-layout :: head}"></head>
+<body>
+<nav th:replace="~{admin/nnh-layout :: nav}"></nav>
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/products">Sản phẩm</a></li>
+            <li class="breadcrumb-item active">Chi tiết sản phẩm #<span th:text="${p.nnhId}"></span></li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="m-0 fw-bold"><i class="fa-solid fa-circle-info"></i> Thông tin chi tiết</h5>
+            <a href="/admin/products" class="btn btn-sm btn-light text-primary fw-bold">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+            </a>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-5 text-center">
+                    <div class="p-3 border rounded bg-light">
+                        <img th:src="${p.nnhImageUrl}" class="img-fluid rounded shadow-sm"
+                             style="max-height: 400px; object-fit: contain;"
+                             alt="Ảnh sản phẩm">
+                    </div>
+                    <div class="mt-3 text-muted fst-italic">
+                        Link ảnh: <a th:href="${p.nnhImageUrl}" target="_blank" th:text="${p.nnhImageUrl}" class="text-truncate d-block"></a>
+                    </div>
+                </div>
+
+                <div class="col-md-7">
+                    <table class="table table-bordered">
+                        <tbody>
+                        <tr>
+                            <th class="bg-light w-25">ID Sản phẩm</th>
+                            <td class="fw-bold text-primary" th:text="${'#' + p.nnhId}"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Tên sản phẩm</th>
+                            <td class="fs-5 fw-bold" th:text="${p.nnhName}"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Danh mục</th>
+                            <td>
+                                        <span class="badge bg-info text-dark fs-6"
+                                              th:text="${p.nnhCategory != null ? p.nnhCategory.nnhName : 'Chưa phân loại'}"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Giá bán</th>
+                            <td class="fs-4 fw-bold text-danger"
+                                th:text="${#numbers.formatDecimal(p.nnhPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Tồn kho</th>
+                            <td>
+                                <span th:if="${p.nnhStock > 10}" class="badge bg-success" th:text="${p.nnhStock + ' cái'}"></span>
+                                <span th:if="${p.nnhStock <= 10 && p.nnhStock > 0}" class="badge bg-warning text-dark" th:text="${p.nnhStock + ' cái (Sắp hết)'}"></span>
+                                <span th:if="${p.nnhStock == 0}" class="badge bg-danger">Hết hàng</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="alert alert-info border-0">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        Bạn có thể chỉnh sửa thông tin sản phẩm này tại trang danh sách.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

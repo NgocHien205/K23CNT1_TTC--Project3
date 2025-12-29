@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/nnh-layout :: head}"></head>
+<body>
+<nav th:replace="~{admin/nnh-layout :: nav}"></nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded shadow-sm">
+        <h4 class="text-primary m-0"><i class="fa-solid fa-users-gear"></i> Quản lý Người dùng</h4>
+        <button class="btn btn-primary" onclick="openAddUserModal()">
+            <i class="fa-solid fa-user-plus"></i> Thêm User mới
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-head-custom text-white">
+                <tr>
+                    <th class="py-3 ps-3">ID</th>
+                    <th class="py-3">Username</th>
+                    <th class="py-3">Họ và Tên</th>
+                    <th class="py-3">SĐT</th> <th class="py-3">Email</th>
+                    <th class="py-3">Vai trò</th>
+                    <th class="py-3">Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="u : ${nnhUsers}">
+                    <td class="ps-3 fw-bold text-secondary" th:text="${'#' + u.nnhId}"></td>
+                    <td class="fw-bold text-primary" th:text="${u.nnhUsername}"></td>
+                    <td th:text="${u.nnhFullName}"></td>
+                    <td th:text="${u.nnhPhoneNumber}"></td> <td th:text="${u.nnhEmail}"></td>
+                    <td>
+                        <span th:if="${u.nnhRole.nnhName == 'ROLE_ADMIN'}" class="badge bg-danger">ADMIN</span>
+                        <span th:if="${u.nnhRole.nnhName == 'ROLE_USER'}" class="badge bg-success">USER</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-2"
+                                th:data-id="${u.nnhId}"
+                                th:data-user="${u.nnhUsername}"
+                                th:data-pass="${u.nnhPassword}"
+                                th:data-name="${u.nnhFullName}"
+                                th:data-email="${u.nnhEmail}"
+                                th:data-phone="${u.nnhPhoneNumber}"
+                                th:data-address="${u.nnhAddress}"
+                                th:data-role="${u.nnhRole != null ? u.nnhRole.nnhId : ''}"
+                                onclick="openEditUserModal(this)">
+                            <i class="fa-solid fa-pen"></i> Sửa
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteUser(' + ${u.nnhId} + ')'">
+                            <i class="fa-solid fa-trash"></i> Xóa
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog modal-lg"> <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="uModalTitle">Thêm Người dùng</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="uId">
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Username</label>
+                    <input type="text" id="uUser" class="form-control" placeholder="Tên đăng nhập...">
+                    <small class="text-muted" id="userNote"></small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Mật khẩu</label>
+                    <input type="text" id="uPass" class="form-control" placeholder="Để trống nếu không đổi">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Họ tên</label>
+                    <input type="text" id="uName" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Email</label>
+                    <input type="email" id="uEmail" class="form-control">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Số điện thoại</label>
+                    <input type="text" id="uPhone" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Vai trò (Role)</label>
+                    <select id="uRoleId" class="form-select">
+                        <option th:each="r : ${nnhRoles}"
+                                th:value="${r.nnhId}"
+                                th:text="${r.nnhName}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Địa chỉ</label>
+                <textarea id="uAddress" class="form-control" rows="2"></textarea>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            <button type="button" class="btn btn-primary" onclick="saveUser()">Lưu thay đổi</button>
+        </div>
+    </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const userModal = new bootstrap.Modal(document.getElementById('userModal'));
+    let isUserEdit = false;
+
+    function openAddUserModal() {
+        isUserEdit = false;
+        document.getElementById('uModalTitle').innerText = "Thêm Người dùng mới";
+        document.getElementById('uId').value = "";
+
+        const uUserInput = document.getElementById('uUser');
+        uUserInput.value = "";
+        uUserInput.disabled = false;
+        document.getElementById('userNote').innerText = "";
+
+        document.getElementById('uPass').value = "";
+        document.getElementById('uName').value = "";
+        document.getElementById('uEmail').value = "";
+
+        // Reset dữ liệu mới
+        document.getElementById('uPhone').value = "";
+        document.getElementById('uAddress').value = "";
+
+        document.getElementById('uRoleId').selectedIndex = 0;
+
+        userModal.show();
+    }
+
+    function openEditUserModal(btn) {
+        isUserEdit = true;
+        document.getElementById('uModalTitle').innerText = "Cập nhật thông tin";
+        document.getElementById('uId').value = btn.getAttribute('data-id');
+
+        const uUserInput = document.getElementById('uUser');
+        uUserInput.value = btn.getAttribute('data-user');
+        uUserInput.disabled = true;
+        document.getElementById('userNote').innerText = "(Không thể thay đổi Username)";
+
+        document.getElementById('uPass').value = btn.getAttribute('data-pass');
+        document.getElementById('uName').value = btn.getAttribute('data-name');
+        document.getElementById('uEmail').value = btn.getAttribute('data-email');
+
+        // Điền dữ liệu SĐT và Địa chỉ vào Modal (xử lý null nếu cần)
+        document.getElementById('uPhone').value = btn.getAttribute('data-phone') || '';
+        document.getElementById('uAddress').value = btn.getAttribute('data-address') || '';
+
+        document.getElementById('uRoleId').value = btn.getAttribute('data-role');
+
+        userModal.show();
+    }
+
+    function saveUser() {
+        const id = document.getElementById('uId').value;
+
+        // Dữ liệu SĐT và Địa chỉ đã có ô input tương ứng ở trên để lấy giá trị
+        const data = {
+            nnhUsername: document.getElementById('uUser').value,
+            nnhPassword: document.getElementById('uPass').value,
+            nnhFullName: document.getElementById('uName').value,
+            nnhEmail: document.getElementById('uEmail').value,
+            nnhPhoneNumber: document.getElementById('uPhone').value,
+            nnhAddress: document.getElementById('uAddress').value,
+            nnhRole: {
+                nnhId: document.getElementById('uRoleId').value
+            }
+        };
+
+        const url = isUserEdit ? '/api/admin/nnh-users/' + id : '/api/admin/nnh-users';
+        const method = isUserEdit ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(async response => {
+            if(response.ok) {
+                alert("Lưu thông tin thành công!");
+                location.reload();
+            } else {
+                const errText = await response.text();
+                alert("Lỗi: " + errText);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Lỗi kết nối đến Server!");
+        });
+    }
+
+    function deleteUser(id) {
+        if(confirm("Bạn có chắc chắn muốn xóa User này?")) {
+            fetch('/api/admin/nnh-users/' + id, { method: 'DELETE' })
+            .then(res => {
+                if(res.ok) location.reload();
+                else alert("Không thể xóa user này!");
+            });
+        }
+    }
+</script>
+</body>
+</html>

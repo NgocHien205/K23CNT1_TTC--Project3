@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/nnh-layout :: head}"></head>
+<body>
+<nav th:replace="~{admin/nnh-layout :: nav}"></nav>
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/admin/orders">Đơn hàng</a></li>
+            <li class="breadcrumb-item active">Đơn hàng #<span th:text="${nnhOrder.nnhId}"></span></li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 text-primary fw-bold"><i class="fa-solid fa-shirt"></i> Danh sách sản phẩm</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Sản phẩm</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-end pe-3">Thành tiền</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${nnhOrder.nnhOrderDetails}">
+                            <td class="ps-3">
+                                <div class="d-flex align-items-center">
+                                    <img th:src="${item.nnhProduct.nnhImageUrl}" class="rounded me-2" style="width:50px; height:50px; object-fit:cover;">
+                                    <div>
+                                        <div class="fw-bold" th:text="${item.nnhProduct.nnhName}"></div>
+                                        <small class="text-muted" th:text="${'ID: ' + item.nnhProduct.nnhId}"></small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center align-middle" th:text="${item.nnhQuantity}"></td>
+                            <td class="text-end align-middle" th:text="${#numbers.formatDecimal(item.nnhPriceAtPurchase, 0, 'COMMA', 0, 'POINT')}"></td>
+                            <td class="text-end align-middle pe-3 fw-bold"
+                                th:text="${#numbers.formatDecimal(item.nnhPriceAtPurchase * item.nnhQuantity, 0, 'COMMA', 0, 'POINT')}"></td>
+                        </tr>
+                        </tbody>
+                        <tfoot class="bg-light">
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold py-3">TỔNG TIỀN ĐƠN HÀNG:</td>
+                            <td class="text-end fw-bold text-danger fs-5 pe-3 py-3"
+                                th:text="${#numbers.formatDecimal(nnhOrder.nnhTotalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-white fw-bold">Thông tin Khách hàng</div>
+                <div class="card-body">
+                    <p class="mb-1"><i class="fa-solid fa-user me-2 text-secondary"></i> <span th:text="${nnhOrder.nnhUser.nnhFullName}"></span></p>
+                    <p class="mb-1"><i class="fa-solid fa-envelope me-2 text-secondary"></i> <span th:text="${nnhOrder.nnhUser.nnhEmail}"></span></p>
+                    <p class="mb-0"><i class="fa-solid fa-calendar-days me-2 text-secondary"></i> <span th:text="${#dates.format(nnhOrder.nnhOrderDate, 'dd/MM/yyyy HH:mm')}"></span></p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary text-white fw-bold">
+                    <i class="fa-solid fa-pen-to-square"></i> Xử lý đơn hàng
+                </div>
+                <div class="card-body bg-light">
+                    <label class="form-label fw-bold">Trạng thái hiện tại:</label>
+                    <div class="mb-3">
+                        <span th:if="${nnhOrder.nnhStatus == 'PENDING'}" class="badge bg-warning text-dark fs-6 w-100 py-2">Chờ duyệt</span>
+                        <span th:if="${nnhOrder.nnhStatus == 'SHIPPED'}" class="badge bg-info text-white fs-6 w-100 py-2">Đang giao hàng</span>
+                        <span th:if="${nnhOrder.nnhStatus == 'COMPLETED'}" class="badge bg-success fs-6 w-100 py-2">Hoàn thành</span>
+                        <span th:if="${nnhOrder.nnhStatus == 'CANCELLED'}" class="badge bg-danger fs-6 w-100 py-2">Đã hủy</span>
+                    </div>
+
+                    <label class="form-label">Cập nhật trạng thái mới:</label>
+                    <div class="input-group mb-3">
+                        <select id="newStatus" class="form-select">
+                            <option value="PENDING" th:selected="${nnhOrder.nnhStatus == 'PENDING'}">Chờ duyệt</option>
+                            <option value="SHIPPED" th:selected="${nnhOrder.nnhStatus == 'SHIPPED'}">Đang giao hàng</option>
+                            <option value="COMPLETED" th:selected="${nnhOrder.nnhStatus == 'COMPLETED'}">Hoàn thành</option>
+                            <option value="CANCELLED" th:selected="${nnhOrder.nnhStatus == 'CANCELLED'}">Hủy đơn</option>
+                        </select>
+                        <button class="btn btn-primary" th:onclick="'updateOrderStatus(' + ${nnhOrder.nnhId} + ')'">Lưu</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-outline-danger w-100 mt-3" th:onclick="'deleteOrder(' + ${nnhOrder.nnhId} + ')'">
+                <i class="fa-solid fa-trash"></i> Xóa đơn hàng này
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateOrderStatus(orderId) {
+        const status = document.getElementById('newStatus').value;
+
+        // Gọi API Update mà chúng ta đã viết trong NnhAdminOrderController
+        fetch(`/api/admin/nnh-orders/${orderId}/status?newStatus=${status}`, {
+            method: 'PUT'
+        })
+        .then(res => {
+            if(res.ok) {
+                alert("Cập nhật trạng thái thành công!");
+                location.reload(); // Tải lại trang để thấy màu badge thay đổi
+            } else {
+                alert("Lỗi khi cập nhật!");
+            }
+        })
+        .catch(err => alert("Lỗi kết nối!"));
+    }
+
+    function deleteOrder(orderId) {
+        if(confirm("CẢNH BÁO: Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa?")) {
+            fetch(`/api/admin/nnh-orders/${orderId}`, {
+                method: 'DELETE'
+            })
+            .then(res => {
+                if(res.ok) {
+                    alert("Đã xóa đơn hàng.");
+                    window.location.href = "/admin/orders"; // Quay về danh sách
+                } else {
+                    alert("Lỗi khi xóa!");
+                }
+            });
+        }
+    }
+</script>
+</body>
+</html>

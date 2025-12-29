@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>NNH Fashion Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .product-card {
+            transition: transform 0.2s;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .product-img {
+            height: 250px;
+            object-fit: cover;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        .nnh-navbar {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .hero-banner {
+            background: linear-gradient(45deg, #0d47a1, #42a5f5);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+            border-radius: 0 0 20px 20px;
+        }
+
+        /* Toast notification styles */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        .toast-success {
+            background-color: #198754;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .toast-error {
+            background-color: #dc3545;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg nnh-navbar sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary" href="/">
+            <i class="fa-solid fa-shirt"></i> NNH STORE
+        </a>
+
+        <form class="d-flex mx-auto" style="width: 400px;" action="/" method="get">
+            <input class="form-control me-2 rounded-pill" type="search" name="keyword"
+                   th:value="${keyword}" placeholder="Tìm quần, áo...">
+            <button class="btn btn-outline-primary rounded-pill" type="submit">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </form>
+
+        <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center" id="navAuthSection">
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="hero-banner text-center">
+    <div class="container">
+        <h1 class="fw-bold">Thời Trang Phong Cách Mới</h1>
+        <p class="lead">Cập nhật xu hướng thời trang trẻ trung, năng động.</p>
+        <a href="#productList" class="btn btn-light text-primary fw-bold px-4 rounded-pill">Mua ngay</a>
+    </div>
+</div>
+
+<div class="container mb-5" id="productList">
+    <h3 class="text-center fw-bold mb-4 text-secondary">SẢN PHẨM MỚI NHẤT</h3>
+
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+        <div class="col" th:each="p : ${nnhProducts}">
+            <div class="card h-100 product-card">
+
+                <a th:href="@{/product/{id}(id=${p.nnhId})}">
+                    <img th:src="${p.nnhImageUrl}" class="product-img card-img-top" alt="Product Image">
+                </a>
+
+                <div class="card-body d-flex flex-column">
+                    <small class="text-muted" th:text="${p.nnhCategory != null ? p.nnhCategory.nnhName : 'Other'}"></small>
+
+                    <h5 class="card-title fw-bold mt-1">
+                        <a th:href="@{/product/{id}(id=${p.nnhId})}" class="text-decoration-none text-primary">
+                            <span th:text="${p.nnhName}"></span>
+                        </a>
+                    </h5>
+
+                    <div class="mt-auto">
+                        <h5 class="text-danger fw-bold" th:text="${#numbers.formatDecimal(p.nnhPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></h5>
+
+                        <button class="btn btn-outline-primary w-100 mt-2"
+                                th:onclick="'addToCart(' + ${p.nnhId} + ')'">
+                            <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${nnhProducts.empty}" class="text-center py-5">
+        <p class="text-muted">Không tìm thấy sản phẩm nào phù hợp.</p>
+        <a href="/" class="btn btn-secondary">Xem tất cả</a>
+    </div>
+</div>
+
+<!-- Toast Notification Container -->
+<div id="toastContainer" class="toast-container"></div>
+
+<footer class="bg-dark text-white text-center py-3 mt-5">
+    <p class="m-0">© 2024 NNH Clothing Store. Designed by Admin.</p>
+</footer>
+
+<script>
+    // 1. KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP
+    const userJson = localStorage.getItem('NNH_USER');
+    const currentUser = userJson ? JSON.parse(userJson) : null;
+
+    const navDiv = document.getElementById('navAuthSection');
+
+    if (currentUser) {
+        // ĐÃ ĐĂNG NHẬP
+        navDiv.innerHTML = `
+            <a href="/profile?userId=${currentUser.nnhId}" class="me-3 fw-bold text-secondary text-decoration-none">
+                <i class="fa-solid fa-user"></i> Xin chào, ${currentUser.nnhFullName}
+            </a>
+
+            <a href="/my-orders?userId=${currentUser.nnhId}" class="btn btn-light me-2 text-primary fw-bold">
+                <i class="fa-solid fa-file-invoice"></i> Đơn hàng
+            </a>
+
+            <a href="/cart?userId=${currentUser.nnhId}" class="btn btn-light position-relative me-2">
+                <i class="fa-solid fa-cart-shopping fa-lg text-primary"></i>
+            </a>
+
+            <button onclick="doLogout()" class="btn btn-sm btn-outline-danger">Thoát</button>
+        `;
+
+        // Nếu là Admin thì hiện thêm nút Admin
+        if(currentUser.nnhRole && currentUser.nnhRole.nnhName === 'ROLE_ADMIN'){
+            navDiv.innerHTML += `<a href="/admin/dashboard" class="btn btn-sm btn-dark ms-2">Admin</a>`;
+        }
+    } else {
+        // CHƯA ĐĂNG NHẬP
+        navDiv.innerHTML = `
+            <a href="/login" class="btn btn-outline-primary me-2">Đăng nhập</a>
+            <a href="/register" class="btn btn-primary">Đăng ký</a>
+        `;
+    }
+
+    // Hàm hiển thị toast notification
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toastContainer');
+
+        // Tạo toast element
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast show ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+
+        toastEl.innerHTML = `
+            <div class="toast-body d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+
+        // Thêm toast vào container
+        toastContainer.appendChild(toastEl);
+
+        // Tự động xóa toast sau 3 giây
+        setTimeout(() => {
+            toastEl.classList.remove('show');
+            setTimeout(() => {
+                if (toastContainer.contains(toastEl)) {
+                    toastContainer.removeChild(toastEl);
+                }
+            }, 300);
+        }, 3000);
+
+        // Thêm sự kiện click cho nút đóng
+        const closeBtn = toastEl.querySelector('.btn-close');
+        closeBtn.addEventListener('click', () => {
+            toastEl.classList.remove('show');
+            setTimeout(() => {
+                if (toastContainer.contains(toastEl)) {
+                    toastContainer.removeChild(toastEl);
+                }
+            }, 300);
+        });
+    }
+
+    // 2. HÀM MUA HÀNG (Sử dụng ID thật)
+    function addToCart(productId) {
+        if (!currentUser) {
+            showToast("Bạn cần đăng nhập để mua hàng!", "error");
+            setTimeout(() => {
+                window.location.href = "/login";
+            }, 1500);
+            return;
+        }
+
+        // Dùng ID thật từ localStorage
+        fetch(`/api/nnh-carts/add?userId=${currentUser.nnhId}&productId=${productId}&quantity=1`, {
+            method: 'POST'
+        })
+        .then(res => {
+            if(res.ok) {
+                showToast("Đã thêm sản phẩm vào giỏ hàng!");
+                // Cập nhật số lượng giỏ hàng nếu có
+                updateCartCount();
+            } else {
+                showToast("Lỗi khi thêm vào giỏ hàng!", "error");
+            }
+        })
+        .catch(err => {
+            showToast("Lỗi kết nối đến máy chủ!", "error");
+        });
+    }
+
+    // Hàm cập nhật số lượng giỏ hàng (nếu có)
+    function updateCartCount() {
+        // Nếu bạn có API lấy số lượng giỏ hàng, có thể gọi ở đây
+        // Ví dụ:
+        // fetch(`/api/nnh-carts/count?userId=${currentUser.nnhId}`)
+        // .then(res => res.json())
+        // .then(count => {
+        //     // Cập nhật badge trên icon giỏ hàng
+        // });
+    }
+
+    // 3. HÀM ĐĂNG XUẤT
+    function doLogout() {
+        localStorage.removeItem('NNH_USER');
+        showToast("Đã đăng xuất thành công!", "success");
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 1500);
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
